@@ -4,10 +4,10 @@
 
 ### Usage:
 ```py
--> py weather.py
+➜ py weather.py
 usage: weather.py [-h] [-v] [-f] [-d] [-c COUNT] city [city ...]
 
--> py weather.py New York City
+➜ py weather.py New York City
 New York             💨 Few clouds          68.14°F
 
 ➜ py weather.py New York City -v
