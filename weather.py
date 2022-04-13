@@ -10,7 +10,6 @@ from urllib import error, parse, request
 from dotenv import load_dotenv
 from loguru import logger
 
-
 root_dir = Path(__file__).parent
 load_dotenv(root_dir.joinpath(".env"))
 API_KEY = os.environ.get("API_KEY")
@@ -35,12 +34,7 @@ def read_user_cli_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="gets weather and temperature info for a city"
     )
-    parser.add_argument(
-        "city",
-        nargs="+",
-        type=str,
-        help="enter the city name"
-    )
+    parser.add_argument("city", nargs="+", type=str, help="enter the city name")
     parser.add_argument(
         "-v",
         "--verbose",
@@ -91,7 +85,9 @@ def _select_weather_display_emoji(weather_id: int) -> str:
     return display_emoji
 
 
-def display_weather_data(data: dict, verbose: bool = False, forecast: bool = False) -> None:
+def display_weather_data(
+    data: dict, verbose: bool = False, forecast: bool = False
+) -> None:
     """Displays the weather data from the API response.
 
     Args:
@@ -103,16 +99,20 @@ def display_weather_data(data: dict, verbose: bool = False, forecast: bool = Fal
         city = data["city"]["name"]
         forecast_data = {}
         for datestamp in data["list"]:
-            local_time = datetime.datetime.fromtimestamp(datestamp["dt"]).strftime("%Y-%m-%d %H:%M")
+            local_time = datetime.datetime.fromtimestamp(datestamp["dt"]).strftime(
+                "%Y-%m-%d %H:%M"
+            )
             forecast_data[local_time] = {
                 "temp": datestamp["main"]["temp"],
                 "weather_type": datestamp["weather"][0]["description"],
                 "weather_id": datestamp["weather"][0]["id"],
                 "humidity": datestamp["main"]["humidity"],
-                "wind_speed": datestamp["wind"]["speed"]
+                "wind_speed": datestamp["wind"]["speed"],
             }
             try:
-                forecast_data[local_time]["rain"] = round(datestamp["rain"]["3h"] * 0.0393701, 2)
+                forecast_data[local_time]["rain"] = round(
+                    datestamp["rain"]["3h"] * 0.0393701, 2
+                )
             except KeyError:
                 pass
 
@@ -127,10 +127,12 @@ def display_weather_data(data: dict, verbose: bool = False, forecast: bool = Fal
         )
     if forecast:
         for datestamp in forecast_data:
-            #logger.debug(f"{datestamp = }")
+            # logger.debug(f"{datestamp = }")
             temp = forecast_data[datestamp]["temp"]
             weather_type = forecast_data[datestamp]["weather_type"]
-            weather_emoji = _select_weather_display_emoji(forecast_data[datestamp]["weather_id"])
+            weather_emoji = _select_weather_display_emoji(
+                forecast_data[datestamp]["weather_id"]
+            )
             if verbose:
                 humidity = forecast_data[datestamp]["humidity"]
                 wind_speed = forecast_data[datestamp]["wind_speed"]
