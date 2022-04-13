@@ -25,35 +25,43 @@ CLEAR = range(800, 801)
 CLOUDY = range(801, 900)
 
 
-def read_user_cli_args() -> argparse.Namespace:
+def read_user_cli_args(args: str) -> argparse.Namespace:
     """Handles the user input from the command line.
 
     Returns:
         argparse.Namespace: Populated namespace object.
     """
     parser = argparse.ArgumentParser(
-        description="gets weather and temperature info for a city"
+        description="Gets weather and temperature info for a city."
     )
-    parser.add_argument("city", nargs="+", type=str, help="enter the city name")
+    parser.add_argument("city", nargs="+", type=str, help="Enter the city name.")
     parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
-        help="display additional output for the query",
+        help="Display additional output for the query.",
     )
     parser.add_argument(
         "-f",
         "--forecast",
         action="store_true",
-        help="get the forecasted weather for the next 5 days",
+        help="Get the forecasted weather for the next 5 days.",
     )
     parser.add_argument(
         "-d",
         "--debug",
         action="store_true",
-        help="run the script in debug mode for more detailed information",
+        help="Run the script in debug mode for more detailed information.",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "-c",
+        "--count",
+        action="store",
+        type=float,
+        default=1.0,
+        help="Forecast with a custom number of days. Supports half days.",
+    )
+    return parser.parse_args(args)
 
 
 def _select_weather_display_emoji(weather_id: int) -> str:
@@ -167,7 +175,7 @@ def display_weather_data(
             )
 
 
-def build_weather_query(city_input: list[str], forecast: bool = False) -> str:
+def build_weather_query(city_input: list[str], count: float, forecast: bool = False) -> str:
     """Builds the url for an API request to OpenWeather's API.
 
     Args:
@@ -181,10 +189,10 @@ def build_weather_query(city_input: list[str], forecast: bool = False) -> str:
     url_encoded_city_name = parse.quote_plus(city_name)
     units = "imperial"
     if forecast:
-        count = 8  # number of 3-hour blocks to use in API call
+        hour_stamps = round(8 * count)  # number of 3-hour blocks to use in API call
         url = (
             f"{FORECAST_API_URL}?q={url_encoded_city_name}"
-            f"&appid={API_KEY}&units={units}&cnt={count}"
+            f"&appid={API_KEY}&units={units}&cnt={hour_stamps}"
         )
     else:
         url = (
@@ -227,10 +235,11 @@ def get_weather_data(query_url: str, debug: bool = False) -> dict:
 
 
 if __name__ == "__main__":
-    user_args = read_user_cli_args()
+    user_args = read_user_cli_args(sys.argv[1:])
     verbosity = True if user_args.verbose else False
     forecast = True if user_args.forecast else False
     debug = True if user_args.debug else False
-    query_url = build_weather_query(user_args.city, forecast)
+    forecast_days = user_args.count
+    query_url = build_weather_query(user_args.city, forecast_days, forecast)
     weather_data = get_weather_data(query_url, debug)
     display_weather_data(weather_data, verbosity, forecast)
