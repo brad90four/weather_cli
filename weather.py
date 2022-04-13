@@ -150,7 +150,7 @@ def display_weather_data(
                     rainfall = 0
                 print(
                     f"{datestamp:<{PADDING}} {weather_emoji} "
-                    f"{weather_type.capitalize():<{PADDING}}{temp}°F "
+                    f"{weather_type.capitalize():<{PADDING}}{temp}°F, "
                     f"{rainfall}in rain, {humidity}% humidity, {wind_speed} mph"
                 )
             else:
