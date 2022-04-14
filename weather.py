@@ -243,3 +243,9 @@ if __name__ == "__main__":
     query_url = build_weather_query(user_args.city, forecast_days, forecast)
     weather_data = get_weather_data(query_url, debug)
     display_weather_data(weather_data, verbosity, forecast)
+    if debug:
+        logger.debug(f"{sys.argv[1:] = }")
+        logger.debug(f"{user_args = }")
+        logger.debug(f"{forecast_days = }")
+        logger.debug(f"{query_url = }")
+        logger.debug(f"{weather_data = }")
