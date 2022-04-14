@@ -2,6 +2,7 @@ import argparse
 import unittest
 
 from loguru import logger
+
 from weather import (
     API_KEY,
     _get_iso_country,
