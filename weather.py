@@ -2,19 +2,23 @@ import argparse
 import datetime
 import json
 import os
-import re
 import sys
 from pathlib import Path
-from urllib import error, parse, request
+from urllib import error, request
 
+from numpy import arange
+
+import iso3166
 from dotenv import load_dotenv
 from loguru import logger
+from rapidfuzz import process
 
 root_dir = Path(__file__).parent
 load_dotenv(root_dir.joinpath(".env"))
 API_KEY = os.environ.get("API_KEY")
 BASE_WEATHER_API_URL = "http://api.openweathermap.org/data/2.5/weather"
 FORECAST_API_URL = "http://api.openweathermap.org/data/2.5/forecast"
+GEO_URL = "http://api.openweathermap.org/geo/1.0/direct"
 PADDING = 20
 THUNDERSTORM = range(200, 300)
 DRIZZLE = range(300, 400)
@@ -54,12 +58,31 @@ def read_user_cli_args(args: str) -> argparse.Namespace:
         help="Run the script in debug mode for more detailed information.",
     )
     parser.add_argument(
-        "-c",
-        "--count",
+        "-fd",
+        "--forecast_days",
         action="store",
         type=float,
         default=1.0,
+        choices=arange(0, 5.5, 0.5),
         help="Forecast with a custom number of days. Supports half days.",
+    )
+    parser.add_argument(
+        "-c",
+        "--country",
+        # action="store",
+        type=str,
+        default="",
+        help="Country to use in the query.",
+    )
+    parser.add_argument(
+        "-u",
+        "--units",
+        nargs="+",
+        action="store",
+        type=str,
+        default="imperial",
+        choices=["metric", "imperial"],
+        help="Units to use in the query.",
     )
     return parser.parse_args(args)
 
@@ -93,6 +116,63 @@ def _select_weather_display_emoji(weather_id: int) -> str:
     return display_emoji
 
 
+def _get_iso_country(input_country: str, debug: bool = False) -> str:
+    """Get the ISO country code for a given country name.
+
+    Args:
+        input_country (str): Country name from user input.
+
+    Returns:
+        str: ISO country code.
+    """
+    try:
+        if input_country.lower() in ("uk", "england"):
+            country_code = "GB"
+        elif input_country.lower() in ("usa", "united states"):
+            country_code = "US"
+        else:
+            fuzzy_match_country = process.extractOne(
+                input_country, iso3166.countries_by_name.keys()
+            )[0]
+            if debug:
+                logger.debug(f"{fuzzy_match_country = }")
+            country_code = iso3166.countries_by_name[fuzzy_match_country].alpha2
+        if debug:
+            logger.debug(f"Country code: {country_code} for: {input_country}")
+    except KeyError:
+        logger.error(f"{input_country} is not a valid country.")
+        sys.exit(1)
+    return country_code
+
+
+def _get_lat_lon(city: str, country: str, debug: bool = False) -> tuple[str]:
+    """Get the latitude and longitude for a given city and country.
+
+    Args:
+        city (str): City name from user input.
+        country (str): Country name from user input.
+        debug (bool): Whether to display debug information.
+
+    Returns:
+        tuple[str]: Latitude and longitude.
+    """
+    city = city[0].replace(" ", "%20")
+    geo_url = f"{GEO_URL}?q={city},{country}&limit=5&appid={API_KEY}"
+    if debug:
+        logger.debug(f"{geo_url = }")
+    try:
+        response = request.urlopen(geo_url)
+    except error.HTTPError as e:
+        logger.error(e)
+        sys.exit(1)
+
+    data = json.loads(response.read().decode("utf-8"))
+    if debug:
+        logger.debug(data)
+    lat, lon = data[0]["lat"], data[0]["lon"]
+    return lat, lon
+
+
 def display_weather_data(
     data: dict, verbose: bool = False, forecast: bool = False
 ) -> None:
@@ -108,7 +188,7 @@ def display_weather_data(
         forecast_data = {}
         for datestamp in data["list"]:
             local_time = datetime.datetime.fromtimestamp(datestamp["dt"]).strftime(
-                "%Y-%m-%d %H:%M"
+                "%a, %B %d %I %p"
             )
             forecast_data[local_time] = {
                 "temp": datestamp["main"]["temp"],
@@ -135,7 +215,6 @@ def display_weather_data(
         )
     if forecast:
         for datestamp in forecast_data:
-            # logger.debug(f"{datestamp = }")
             temp = forecast_data[datestamp]["temp"]
             weather_type = forecast_data[datestamp]["weather_type"]
             weather_emoji = _select_weather_display_emoji(
@@ -159,7 +238,7 @@ def display_weather_data(
                 )
     if verbose:
         if forecast:
-            pass
+            pass  # already handled in forecast block
         else:
             humidity = data["main"]["humidity"]
             wind_speed = data["wind"]["speed"]
@@ -175,28 +254,29 @@ def display_weather_data(
             )
 
 
-def build_weather_query(city_input: list[str], count: float, forecast: bool = False) -> str:
+def build_weather_query(
+    lat_lon: tuple[str], count: float, units: str, forecast: bool = False
+) -> str:
     """Builds the url for an API request to OpenWeather's API.
 
     Args:
-        city_input (List[str]): Name of a city from user input.
+        lat_lon (tuple[str]): Latitude and Longitude of the location.
+        count (float): Number of days to forecast.
+        units (str): Units to use for the query.
         forecast (bool): Display the forecasted weather for the next 5 days.
 
     Returns:
         str: URL formatted for a call to the OpenWeather's city name endpoint.
     """
-    city_name = " ".join(city_input)
-    url_encoded_city_name = parse.quote_plus(city_name)
-    units = "imperial"
     if forecast:
         hour_stamps = round(8 * count)  # number of 3-hour blocks to use in API call
         url = (
-            f"{FORECAST_API_URL}?q={url_encoded_city_name}"
+            f"{FORECAST_API_URL}?lat={lat_lon[0]}&lon={lat_lon[1]}"
             f"&appid={API_KEY}&units={units}&cnt={hour_stamps}"
         )
     else:
         url = (
-            f"{BASE_WEATHER_API_URL}?q={url_encoded_city_name}"
+            f"{BASE_WEATHER_API_URL}?lat={lat_lon[0]}&lon={lat_lon[1]}"
             f"&appid={API_KEY}&units={units}"
         )
     return url
@@ -218,10 +298,7 @@ def get_weather_data(query_url: str, debug: bool = False) -> dict:
         if http_error.code == 401:
             sys.exit("Invalid API key. Please check your API key.")
         elif http_error.code == 404:
-            pattern = r"q=([\w|+]*)&"
-            group_match = re.search(pattern, query_url).group(0)
-            city = group_match.replace("q=", "").replace("&", "").replace("+", " ")
-            sys.exit(f"Can't find city name: {city}")
+            sys.exit(f"Invalid url: {query_url}")
         else:
             sys.exit(f"HTTP Error: {http_error.code}")
 
@@ -239,13 +316,19 @@ if __name__ == "__main__":
     verbosity = True if user_args.verbose else False
     forecast = True if user_args.forecast else False
     debug = True if user_args.debug else False
-    forecast_days = user_args.count
-    query_url = build_weather_query(user_args.city, forecast_days, forecast)
+    forecast_days = user_args.forecast_days
+    units = user_args.units
+    country = _get_iso_country(user_args.country, debug) if user_args.country else ""
+    lat_lon = _get_lat_lon(user_args.city, country, debug)
+    query_url = build_weather_query(lat_lon, forecast_days, units, forecast)
     weather_data = get_weather_data(query_url, debug)
     display_weather_data(weather_data, verbosity, forecast)
     if debug:
         logger.debug(f"{sys.argv[1:] = }")
         logger.debug(f"{user_args = }")
         logger.debug(f"{forecast_days = }")
+        logger.debug(f"{units = }")
+        logger.debug(f"{country = }")
+        logger.debug(f"{lat_lon = }")
         logger.debug(f"{query_url = }")
         logger.debug(f"{weather_data = }")
