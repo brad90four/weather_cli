@@ -1,6 +1,5 @@
 import argparse
 import unittest
-import sys
 
 from loguru import logger
 from weather import (
