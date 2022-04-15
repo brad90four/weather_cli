@@ -3,12 +3,33 @@
 ## A command line program for weather updates
 
 ### Usage:
+#### Help message:
 ```py
-➜ py weather.py
+➜ py weather.py -h
 usage: weather.py [-h] [-v] [-f] [-d] [-fd {0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0}]
                   [-c COUNTRY] [-u {metric,imperial}]
                   city [city ...]
 
+Gets weather and temperature info for a city.
+
+positional arguments:
+  city                  Enter the city name.
+
+options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Display additional output for the query.
+  -f, --forecast        Get the forecasted weather for the next 5 days.
+  -d, --debug           Run the script in debug mode for more detailed information.
+  -fd {0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0}, --forecast-days {0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0}
+                        Forecast with a custom number of days. Supports half days.
+  -c COUNTRY, --country COUNTRY
+                        Country to use in the query.
+  -u {metric,imperial}, --units {metric,imperial}
+                        Units to use in the query.
+```
+
+#### Basic use, verbose use, forecast for 0.5 days ahead, forecast for 0.5 days ahead with verbosity in metric.
+```py
 ➜ py weather.py new york city
 New York             🔆 Clear sky           52.63°F
 
