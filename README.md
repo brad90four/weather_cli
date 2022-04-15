@@ -5,27 +5,25 @@
 ### Usage:
 ```py
 ➜ py weather.py
-usage: weather.py [-h] [-v] [-f] [-d] [-c COUNT] city [city ...]
+usage: weather.py [-h] [-v] [-f] [-d] [-fd {0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0}]
+                  [-c COUNTRY] [-u {metric,imperial}]
+                  city [city ...]
 
-➜ py weather.py New York City
-New York             💨 Few clouds          68.14°F
+➜ py weather.py new york city
+New York             🔆 Clear sky           52.63°F
 
-➜ py weather.py New York City -v
-New York             💨 Few clouds          68.14°F
-Max:82.02°F | Min:58.95°F | 0in rain | 69% humidity | 5.99 mph
+➜ py weather.py new york city -v
+New York             🔆 Clear sky           53.4°F
+Max:56.98°F | Min:48.18°F | 0in rain | 53% humidity | 5.75 mph
 
-➜ py weather.py New York City -f
-2022-04-13 17:00     💨 Broken clouds       67.69°F
-2022-04-13 20:00     💨 Broken clouds       66°F
-2022-04-13 23:00     💦 Light rain          63.43°F
-2022-04-14 02:00     💨 Overcast clouds     62.2°F
-2022-04-14 05:00     💨 Overcast clouds     62.73°F
-2022-04-14 08:00     💨 Overcast clouds     62.87°F
-2022-04-14 11:00     💨 Scattered clouds    71.1°F
-2022-04-14 14:00     💨 Broken clouds       77.52°F
+➜ py weather.py new york city -f --forecast-days 0.5
+Fri, April 15 08 AM  🔆 Clear sky           53.11°F
+Fri, April 15 11 AM  🔆 Clear sky           55.6°F
+Fri, April 15 05 PM  🔆 Clear sky           65.52°F
 
-➜ py weather.py New York City -f -v -c 0.5
-2022-04-13 17:00     💨 Broken clouds       67.69°F, 0in rain, 65% humidity, 5.73 mph
-2022-04-13 20:00     💨 Broken clouds       66°F, 0in rain, 65% humidity, 4.83 mph
-2022-04-13 23:00     💦 Light rain          63.43°F, 0.04in rain, 83% humidity, 5.39 mph
-2022-04-14 02:00     💨 Overcast clouds     62.2°F, 0in rain, 81% humidity, 7.43 mph
+➜ py weather.py new york city -f --forecast-days 0.5 -v -u metric
+Fri, April 15 08 AM  🔆 Clear sky           11.73°C, 0in rain, 52% humidity, 3.84 mph
+Fri, April 15 11 AM  🔆 Clear sky           13.11°C, 0in rain, 42% humidity, 3.56 mph
+Fri, April 15 02 PM  🔆 Clear sky           16.14°C, 0in rain, 32% humidity, 4.7 mph
+Fri, April 15 05 PM  🔆 Clear sky           18.62°C, 0in rain, 29% humidity, 5.24 mph
+```

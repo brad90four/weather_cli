@@ -59,7 +59,7 @@ def read_user_cli_args(args: str) -> argparse.Namespace:
     )
     parser.add_argument(
         "-fd",
-        "--forecast_days",
+        "--forecast-days",
         action="store",
         type=float,
         default=1.0,
@@ -77,7 +77,6 @@ def read_user_cli_args(args: str) -> argparse.Namespace:
     parser.add_argument(
         "-u",
         "--units",
-        nargs="+",
         action="store",
         type=str,
         default="imperial",
@@ -156,9 +155,13 @@ def _get_lat_lon(city: str, country: str, debug: bool = False) -> tuple[str]:
     Returns:
         tuple[str]: Latitude and longitude.
     """
-    city = city[0].replace(" ", "%20")
-    geo_url = f"{GEO_URL}?q={city},{country}&limit=5&appid={API_KEY}"
+    city = city.replace(" ", "+")
+    if country == "":
+        geo_url = f"{GEO_URL}?q={city}&limit=5&appid={API_KEY}"
+    else:
+        geo_url = f"{GEO_URL}?q={city},{country}&limit=5&appid={API_KEY}"
     if debug:
+        logger.debug(f"{city = }, {country = }")
         logger.debug(f"{geo_url = }")
     try:
         response = request.urlopen(geo_url)
@@ -166,15 +169,19 @@ def _get_lat_lon(city: str, country: str, debug: bool = False) -> tuple[str]:
         logger.error(e)
         sys.exit(1)
 
-    data = json.loads(response.read().decode("utf-8"))
+    data = json.loads(response.read())
     if debug:
         logger.debug(data)
-    lat, lon = data[0]["lat"], data[0]["lon"]
+    try:
+        lat, lon = data[0]["lat"], data[0]["lon"]
+    except IndexError:
+        logger.error(f"{response.code = }, {len(data) = }\n{data = }")
+        raise
     return lat, lon
 
 
 def display_weather_data(
-    data: dict, verbose: bool = False, forecast: bool = False
+    data: dict, verbose: bool = False, forecast: bool = False, units: str = "imperial"
 ) -> None:
     """Displays the weather data from the API response.
 
@@ -201,7 +208,7 @@ def display_weather_data(
                 forecast_data[local_time]["rain"] = round(
                     datestamp["rain"]["3h"] * 0.0393701, 2
                 )
-            except KeyError:
+            except KeyError:  # for when there is no rain
                 pass
 
     else:
@@ -211,7 +218,8 @@ def display_weather_data(
         weather_emoji = _select_weather_display_emoji(weather_id)
         weather_type = data["weather"][0]["description"]
         print(
-            f"{city:<{PADDING}} {weather_emoji} {weather_type.capitalize():<{PADDING}}{temp}°F"
+            f"{city:<{PADDING}} {weather_emoji} {weather_type.capitalize():<{PADDING}}{temp}"
+            f"°{'F' if units == 'imperial' else 'C'}"
         )
     if forecast:
         for datestamp in forecast_data:
@@ -229,12 +237,13 @@ def display_weather_data(
                     rainfall = 0
                 print(
                     f"{datestamp:<{PADDING}} {weather_emoji} "
-                    f"{weather_type.capitalize():<{PADDING}}{temp}°F, "
+                    f"{weather_type.capitalize():<{PADDING}}{temp}°{'F' if units == 'imperial' else 'C'}, "
                     f"{rainfall}in rain, {humidity}% humidity, {wind_speed} mph"
                 )
             else:
                 print(
-                    f"{datestamp:<{PADDING}} {weather_emoji} {weather_type.capitalize():<{PADDING}}{temp}°F"
+                    f"{datestamp:<{PADDING}} {weather_emoji} {weather_type.capitalize():<{PADDING}}"
+                    f"{temp}°{'F' if units == 'imperial' else 'C'}"
                 )
     if verbose:
         if forecast:
@@ -249,7 +258,7 @@ def display_weather_data(
             except KeyError:
                 rainfall = 0
             print(
-                f"Max:{max_temp}°F | Min:{min_temp}°F | "
+                f"Max:{max_temp}°F | Min:{min_temp}°{'F' if units == 'imperial' else 'C'} | "
                 f"{rainfall}in rain | {humidity}% humidity | {wind_speed} mph"
             )
 
@@ -313,19 +322,21 @@ def get_weather_data(query_url: str, debug: bool = False) -> dict:
 
 if __name__ == "__main__":
     user_args = read_user_cli_args(sys.argv[1:])
+    city = " ".join(user_args.city)
     verbosity = True if user_args.verbose else False
     forecast = True if user_args.forecast else False
     debug = True if user_args.debug else False
     forecast_days = user_args.forecast_days
     units = user_args.units
     country = _get_iso_country(user_args.country, debug) if user_args.country else ""
-    lat_lon = _get_lat_lon(user_args.city, country, debug)
+    lat_lon = _get_lat_lon(city, country, debug)
     query_url = build_weather_query(lat_lon, forecast_days, units, forecast)
     weather_data = get_weather_data(query_url, debug)
-    display_weather_data(weather_data, verbosity, forecast)
+    display_weather_data(weather_data, verbosity, forecast, units)
     if debug:
         logger.debug(f"{sys.argv[1:] = }")
         logger.debug(f"{user_args = }")
+        logger.debug(f"{city = }")
         logger.debug(f"{forecast_days = }")
         logger.debug(f"{units = }")
         logger.debug(f"{country = }")
