@@ -195,7 +195,7 @@ def display_weather_data(
         forecast_data = {}
         for datestamp in data["list"]:
             local_time = datetime.datetime.fromtimestamp(datestamp["dt"]).strftime(
-                "%a, %B %d %I %p"
+                "%a, %B %d %I:%M %p"
             )
             forecast_data[local_time] = {
                 "temp": datestamp["main"]["temp"],
