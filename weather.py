@@ -38,7 +38,13 @@ def read_user_cli_args(args: str) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Gets weather and temperature info for a city."
     )
-    parser.add_argument("city", nargs="+", type=str, help="Enter the city name.")
+    parser.add_argument(
+        "-city",
+        nargs="+",
+        type=str,
+        default="",
+        help="Enter the city name."
+    )
     parser.add_argument(
         "-v",
         "--verbose",
@@ -82,6 +88,15 @@ def read_user_cli_args(args: str) -> argparse.Namespace:
         default="imperial",
         choices=["metric", "imperial"],
         help="Units to use in the query.",
+    )
+    parser.add_argument(
+        "-l",
+        "--latlon",
+        nargs="+",
+        type=float,
+        action="store",
+        default=0.0,
+        help="Latitude and longitude to use in the query.",
     )
     return parser.parse_args(args)
 
@@ -329,7 +344,7 @@ if __name__ == "__main__":
     forecast_days = user_args.forecast_days
     units = user_args.units
     country = _get_iso_country(user_args.country, debug) if user_args.country else ""
-    lat_lon = _get_lat_lon(city, country, debug)
+    lat_lon = _get_lat_lon(city, country, debug) if user_args.city else tuple(user_args.latlon)
     query_url = build_weather_query(lat_lon, forecast_days, units, forecast)
     weather_data = get_weather_data(query_url, debug)
     display_weather_data(weather_data, verbosity, forecast, units)
