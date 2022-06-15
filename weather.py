@@ -111,23 +111,21 @@ def _select_weather_display_emoji(weather_id: int) -> str:
         display_emoji (str): The emoji for a given weather ID.
     """
     if weather_id in THUNDERSTORM:
-        display_emoji = "💥"
+        return "💥"
     elif weather_id in DRIZZLE:
-        display_emoji = "💧"
+        return "💧"
     elif weather_id in RAIN:
-        display_emoji = "💦"
+        return "💦"
     elif weather_id in SNOW:
-        display_emoji = "⛄️"
+        return "⛄️"
     elif weather_id in ATMOSPHERE:
-        display_emoji = "🌀"
+        return "🌀"
     elif weather_id in CLEAR:
-        display_emoji = "🔆"
+        return "🔆"
     elif weather_id in CLOUDY:
-        display_emoji = "💨"
+        return "💨"
     else:  # In case the API adds new weather codes
-        display_emoji = "🌈"
-
-    return display_emoji
+        return "🌈"
 
 
 def _get_iso_country(input_country: str, debug: bool = False) -> str:
