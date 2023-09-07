@@ -33,16 +33,17 @@ def get_debug_flag() -> argparse.Namespace:
 
 
 class TestWeather(unittest.TestCase):
-    debug = False
+    debug = True
 
     def test_read_user_cli_args(self):
-        test_city_args = ["chicago"]
+        test_city_args = ["-city", "chicago"]
         test_city_namespace = read_user_cli_args(test_city_args)
         if self.debug:
             logger.debug(f"{test_city_namespace =}")
+            print(f"{test_city_namespace =}")
         self.assertEqual(test_city_namespace.city, ["chicago"])
 
-        test_options_args = ["chicago", "-v", "-d", "-f"]
+        test_options_args = ["-city", "chicago", "-v", "-d", "-f"]
         test_options_namespace = read_user_cli_args(test_options_args)
         if self.debug:
             logger.debug(f"{test_options_namespace =}")
@@ -105,30 +106,30 @@ class TestWeather(unittest.TestCase):
 
     def test_get_lat_lon(self):
         test_lat_lon = [
-            (["London"], "GB", (51.509865, -0.118092)),
-            (["New York"], "US", (40.730610, -73.935242)),
-            (["Paris"], "FR", (48.856614, 2.352222)),
-            (["Tokyo"], "JP", (35.689487, 139.691711)),
-            (["Sydney"], "AU", (-33.865143, 151.209900)),
-            (["Moscow"], "RU", (55.751244, 37.618423)),
-            (["Beijing"], "CN", (39.904211, 116.407395)),
-            (["Seoul"], "KR", (37.566535, 126.977969)),
-            (["Cairo"], "EG", (30.0444, 31.2357)),
-            (["New Delhi"], "IN", (28.613939, 77.209021)),
-            (["Buenos Aires"], "AR", (-34.603722, -58.381592)),
-            (["Santiago"], "CL", (-33.448891, -70.669265)),
-            (["Bogota"], "CO", (4.598056, -74.075833)),
-            (["Lima"], "PE", (-12.046374, -77.042793)),
-            (["Brasilia"], "BR", (-15.780167, -47.918611)),
-            (["Sao Paulo"], "BR", (-23.550520, -46.633309)),
-            (["Mexico City"], "MX", (19.432608, -99.133209)),
-            (["Lagos"], "NG", (6.455, 3.379206)),
-            (["Kinshasa"], "CD", (-4.329717, 15.313500)),
-            (["Johannesburg"], "ZA", (-26.202868, 28.039094)),
-            (["Khartoum"], "SD", (15.500656, 32.534180)),
-            (["Dhaka"], "BD", (23.710431, 90.407143)),
-            (["Manila"], "PH", (14.599512, 120.984219)),
-            (["Tehran"], "IR", (35.694389, 51.421528)),
+            ("London", "GB", (51.509865, -0.118092)),
+            ("New York", "US", (40.730610, -73.935242)),
+            ("Paris", "FR", (48.856614, 2.352222)),
+            ("Tokyo", "JP", (35.689487, 139.691711)),
+            ("Sydney", "AU", (-33.865143, 151.209900)),
+            ("Moscow", "RU", (55.751244, 37.618423)),
+            ("Beijing", "CN", (39.904211, 116.407395)),
+            ("Seoul", "KR", (37.566535, 126.977969)),
+            ("Cairo", "EG", (30.0444, 31.2357)),
+            ("New Delhi", "IN", (28.613939, 77.209021)),
+            ("Buenos Aires", "AR", (-34.603722, -58.381592)),
+            ("Santiago", "CL", (-33.448891, -70.669265)),
+            ("Bogota", "CO", (4.598056, -74.075833)),
+            ("Lima", "PE", (-12.046374, -77.042793)),
+            ("Brasilia", "BR", (-15.780167, -47.918611)),
+            ("Sao Paulo", "BR", (-23.550520, -46.633309)),
+            ("Mexico City", "MX", (19.432608, -99.133209)),
+            ("Lagos", "NG", (6.455, 3.379206)),
+            ("Kinshasa", "CD", (-4.329717, 15.313500)),
+            ("Johannesburg", "ZA", (-26.202868, 28.039094)),
+            ("Khartoum", "SD", (15.500656, 32.534180)),
+            ("Dhaka", "BD", (23.710431, 90.407143)),
+            ("Manila", "PH", (14.599512, 120.984219)),
+            ("Tehran", "IR", (35.694389, 51.421528)),
         ]
         for city, country, lat_lon in test_lat_lon:
             lat, lon = _get_lat_lon(city, country)
