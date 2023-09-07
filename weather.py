@@ -4,13 +4,13 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Any
 from urllib import error, request
-
-from numpy import arange
 
 import iso3166
 from dotenv import load_dotenv
 from loguru import logger
+from numpy import arange
 from rapidfuzz import process
 
 root_dir = Path(__file__).parent
@@ -29,7 +29,7 @@ CLEAR = range(800, 801)
 CLOUDY = range(801, 900)
 
 
-def read_user_cli_args(args: str) -> argparse.Namespace:
+def read_user_cli_args(args: list) -> argparse.Namespace:
     """Handles the user input from the command line.
 
     Returns:
@@ -39,11 +39,7 @@ def read_user_cli_args(args: str) -> argparse.Namespace:
         description="Gets weather and temperature info for a city."
     )
     parser.add_argument(
-        "-city",
-        nargs="+",
-        type=str,
-        default="",
-        help="Enter the city name."
+        "-city", nargs="+", type=str, default="", help="Enter the city name."
     )
     parser.add_argument(
         "-v",
@@ -157,7 +153,7 @@ def _get_iso_country(input_country: str, debug: bool = False) -> str:
     return country_code
 
 
-def _get_lat_lon(city: str, country: str, debug: bool = False) -> tuple[str]:
+def _get_lat_lon(city: str, country: str, debug: bool = False) -> tuple[str, str]:
     """Get the latitude and longitude for a given city and country.
 
     Args:
@@ -186,7 +182,7 @@ def _get_lat_lon(city: str, country: str, debug: bool = False) -> tuple[str]:
     if debug:
         logger.debug(data)
     try:
-        lat, lon = data[0]["lat"], data[0]["lon"]
+        lat, lon = str(data[0]["lat"]), str(data[0]["lon"])
     except IndexError:
         logger.error(f"{response.code = }, {len(data) = }\n{data = }")
         raise
@@ -277,7 +273,10 @@ def display_weather_data(
 
 
 def build_weather_query(
-    lat_lon: tuple[str], count: float, units: str, forecast: bool = False
+    lat_lon: tuple[str, str] | tuple[Any, ...],
+    count: float,
+    units: str,
+    forecast: bool = False,
 ) -> str:
     """Builds the url for an API request to OpenWeather's API.
 
@@ -342,7 +341,11 @@ if __name__ == "__main__":
     forecast_days = user_args.forecast_days
     units = user_args.units
     country = _get_iso_country(user_args.country, debug) if user_args.country else ""
-    lat_lon = _get_lat_lon(city, country, debug) if user_args.city else tuple(user_args.latlon)
+    lat_lon = (
+        _get_lat_lon(city, country, debug)
+        if user_args.city
+        else tuple(user_args.latlon)
+    )
     query_url = build_weather_query(lat_lon, forecast_days, units, forecast)
     weather_data = get_weather_data(query_url, debug)
     display_weather_data(weather_data, verbosity, forecast, units)
