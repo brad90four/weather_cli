@@ -2,6 +2,7 @@ import argparse
 import unittest
 
 from loguru import logger
+
 from weather import (
     API_KEY,
     _get_iso_country,
@@ -24,16 +25,13 @@ def get_debug_flag() -> argparse.Namespace:
         description="Get the debug flag from the command line"
     )
     parser.add_argument(
-        "-d",
-        "--debug",
-        action="store_true",
-        help="Enable debug logging",
+        "-d", "--debug", action="store_true", help="Enable debug logging", type=bool
     )
     return parser.parse_args()
 
 
 class TestWeather(unittest.TestCase):
-    debug = True
+    debug: bool = True  # type: ignore
 
     def test_read_user_cli_args(self):
         test_city_args = ["-city", "chicago"]
@@ -136,7 +134,7 @@ class TestWeather(unittest.TestCase):
             test_lat, test_lon = lat_lon
             try:
                 self.assertEqual(
-                    (round(lat, 0), round(lon, 0)),
+                    (round(float(lat), 0), round(float(lon), 0)),
                     (round(test_lat, 0), round(test_lon, 0)),
                 )
             except AssertionError:
