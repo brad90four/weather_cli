@@ -25,7 +25,7 @@ def get_debug_flag() -> argparse.Namespace:
         description="Get the debug flag from the command line"
     )
     parser.add_argument(
-        "-d", "--debug", action="store_true", help="Enable debug logging", type=bool
+        "-d", "--debug", action="store_true", help="Enable debug logging"
     )
     return parser.parse_args()
 
@@ -34,14 +34,14 @@ class TestWeather(unittest.TestCase):
     debug: bool = True  # type: ignore
 
     def test_read_user_cli_args(self):
-        test_city_args = ["-city", "chicago"]
+        test_city_args = ["--city", "chicago"]
         test_city_namespace = read_user_cli_args(test_city_args)
         if self.debug:
             logger.debug(f"{test_city_namespace =}")
             print(f"{test_city_namespace =}")
         self.assertEqual(test_city_namespace.city, ["chicago"])
 
-        test_options_args = ["-city", "chicago", "-v", "-d", "-f"]
+        test_options_args = ["--city", "chicago", "-v", "-d", "-f"]
         test_options_namespace = read_user_cli_args(test_options_args)
         if self.debug:
             logger.debug(f"{test_options_namespace =}")
@@ -92,6 +92,7 @@ class TestWeather(unittest.TestCase):
             "England",
         ]
         for country in test_england:
+            logger.debug(f"{country = }, {_get_iso_country(country) = }")
             self.assertEqual(_get_iso_country(country), "GB")
 
         test_usa = [

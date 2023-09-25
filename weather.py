@@ -27,6 +27,7 @@ SNOW = range(600, 700)
 ATMOSPHERE = range(700, 800)
 CLEAR = range(800, 801)
 CLOUDY = range(801, 900)
+HOME_CITY = os.environ.get("HOME_CITY")
 
 
 def read_user_cli_args(args: list) -> argparse.Namespace:
@@ -39,7 +40,7 @@ def read_user_cli_args(args: list) -> argparse.Namespace:
         description="Gets weather and temperature info for a city."
     )
     parser.add_argument(
-        "-city", nargs="+", type=str, default="", help="Enter the city name."
+        "-c", "--city", nargs="+", type=str, default="", help="Enter the city name."
     )
     parser.add_argument(
         "-v",
@@ -69,7 +70,6 @@ def read_user_cli_args(args: list) -> argparse.Namespace:
         help="Forecast with a custom number of days. Supports half days.",
     )
     parser.add_argument(
-        "-c",
         "--country",
         # action="store",
         type=str,
@@ -334,7 +334,11 @@ def get_weather_data(query_url: str, debug: bool = False) -> dict:
 
 if __name__ == "__main__":
     user_args = read_user_cli_args(sys.argv[1:])
-    city = " ".join(user_args.city)
+    if len(user_args.city) != 0:
+        user_args.city = " ".join(user_args.city)
+        city = user_args.city
+    else:
+        city = HOME_CITY
     verbosity = True if user_args.verbose else False
     forecast = True if user_args.forecast else False
     debug = True if user_args.debug else False
@@ -343,7 +347,7 @@ if __name__ == "__main__":
     country = _get_iso_country(user_args.country, debug) if user_args.country else ""
     lat_lon = (
         _get_lat_lon(city, country, debug)
-        if user_args.city
+        if not user_args.latlon
         else tuple(user_args.latlon)
     )
     query_url = build_weather_query(lat_lon, forecast_days, units, forecast)
